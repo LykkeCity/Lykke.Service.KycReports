@@ -2,6 +2,8 @@
 using Common.Log;
 using Lykke.Service.KycReports.AutorestClient;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Lykke.Service.KycReports.AutorestClient.Models;
 
 namespace Lykke.Service.KycReports.Client
 {
@@ -40,6 +42,16 @@ namespace Lykke.Service.KycReports.Client
         public async Task<bool?> RebuildKycOfficersPerformance()
         {
             return await _api.ApiKycReportingRebuildPerformPostAsync();
+        }
+
+        public async Task<IList<KycClientStatRow>> GetKycClientStatsData(DateTime dateFrom, DateTime dateTo)
+        {
+            return await _api.ApiKycReportingClientStatByDateFromByDateToGetAsync(dateFrom, dateTo);
+        }
+
+        public async Task<IList<KycClientStatRow>> GetKycClientStatsDataShort(DateTime dateFrom, DateTime dateTo)
+        {
+            return await _api.ApiKycReportingClientStatShortByDateFromByDateToGetAsync(dateFrom, dateTo);
         }
 
 

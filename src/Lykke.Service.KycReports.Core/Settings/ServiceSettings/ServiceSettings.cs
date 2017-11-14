@@ -6,6 +6,6 @@ namespace Lykke.Service.KycReports.Core.Settings.ServiceSettings
 {
     public class ServiceSettings
     {
-        public string KycServiceUri { get; set; }
+        public string ClientAccountServiceUrl { get; set; }
     }
 }

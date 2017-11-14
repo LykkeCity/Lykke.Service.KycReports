@@ -7,5 +7,7 @@ namespace Lykke.Service.KycReports.Core.Settings.ServiceSettings
     {
         public DbSettings Db { get; set; }
         public KycServiceSettings KycServiceSettings { get; set; }
+        public ServiceSettings Services { get; set; }
+
     }
 }

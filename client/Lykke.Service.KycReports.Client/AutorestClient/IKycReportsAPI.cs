@@ -97,5 +97,29 @@ namespace Lykke.Service.KycReports.AutorestClient
         /// </param>
         Task<HttpOperationResponse<bool?>> ApiKycReportingRebuildPerformPostWithHttpMessagesAsync(Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <param name='dateFrom'>
+        /// </param>
+        /// <param name='dateTo'>
+        /// </param>
+        /// <param name='customHeaders'>
+        /// The headers that will be added to request.
+        /// </param>
+        /// <param name='cancellationToken'>
+        /// The cancellation token.
+        /// </param>
+        Task<HttpOperationResponse<IList<KycClientStatRow>>> ApiKycReportingClientStatByDateFromByDateToGetWithHttpMessagesAsync(System.DateTime dateFrom, System.DateTime dateTo, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <param name='dateFrom'>
+        /// </param>
+        /// <param name='dateTo'>
+        /// </param>
+        /// <param name='customHeaders'>
+        /// The headers that will be added to request.
+        /// </param>
+        /// <param name='cancellationToken'>
+        /// The cancellation token.
+        /// </param>
+        Task<HttpOperationResponse<IList<KycClientStatRow>>> ApiKycReportingClientStatShortByDateFromByDateToGetWithHttpMessagesAsync(System.DateTime dateFrom, System.DateTime dateTo, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+
     }
 }

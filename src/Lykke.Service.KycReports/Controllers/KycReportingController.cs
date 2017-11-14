@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
 using Lykke.Service.KycReports.Core.Domain.Reports;
+using System.Collections.Generic;
+using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 
 namespace Lykke.Service.KycReports.Controllers
 {
@@ -50,5 +52,21 @@ namespace Lykke.Service.KycReports.Controllers
         {
             return await _kycReportingService.RebuildKycOfficersPerformance();
         }
+
+        [HttpGet]
+        [Route("clientStat/{dateFrom}/{dateTo}")]
+        public async Task<IEnumerable<KycClientStatRow>> GetKycClientStatsData(DateTime dateFrom, DateTime dateTo)
+        {
+            var rows = await _kycReportingService.GetKycClientStatRows(dateFrom, dateTo);
+            return rows;
+        }
+
+        [HttpGet]
+        [Route("clientStatShort/{dateFrom}/{dateTo}")]
+        public async Task<IEnumerable<KycClientStatRow>> GetKycClientStatsDataShort(DateTime dateFrom, DateTime dateTo)
+        {
+            return await _kycReportingService.GetKycClientStatRows(dateFrom, dateTo, new KycStatus[] { KycStatus.Ok, KycStatus.ReviewDone });
+        }
+
     }
 }

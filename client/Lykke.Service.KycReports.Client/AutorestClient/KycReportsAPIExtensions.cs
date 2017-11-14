@@ -7,6 +7,8 @@
 namespace Lykke.Service.KycReports.AutorestClient
 {
     using Models;
+    using System.Collections;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -172,6 +174,66 @@ namespace Lykke.Service.KycReports.AutorestClient
             public static async Task<bool?> ApiKycReportingRebuildPerformPostAsync(this IKycReportsAPI operations, CancellationToken cancellationToken = default(CancellationToken))
             {
                 using (var _result = await operations.ApiKycReportingRebuildPerformPostWithHttpMessagesAsync(null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='dateFrom'>
+            /// </param>
+            /// <param name='dateTo'>
+            /// </param>
+            public static IList<KycClientStatRow> ApiKycReportingClientStatByDateFromByDateToGet(this IKycReportsAPI operations, System.DateTime dateFrom, System.DateTime dateTo)
+            {
+                return operations.ApiKycReportingClientStatByDateFromByDateToGetAsync(dateFrom, dateTo).GetAwaiter().GetResult();
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='dateFrom'>
+            /// </param>
+            /// <param name='dateTo'>
+            /// </param>
+            /// <param name='cancellationToken'>
+            /// The cancellation token.
+            /// </param>
+            public static async Task<IList<KycClientStatRow>> ApiKycReportingClientStatByDateFromByDateToGetAsync(this IKycReportsAPI operations, System.DateTime dateFrom, System.DateTime dateTo, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                using (var _result = await operations.ApiKycReportingClientStatByDateFromByDateToGetWithHttpMessagesAsync(dateFrom, dateTo, null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='dateFrom'>
+            /// </param>
+            /// <param name='dateTo'>
+            /// </param>
+            public static IList<KycClientStatRow> ApiKycReportingClientStatShortByDateFromByDateToGet(this IKycReportsAPI operations, System.DateTime dateFrom, System.DateTime dateTo)
+            {
+                return operations.ApiKycReportingClientStatShortByDateFromByDateToGetAsync(dateFrom, dateTo).GetAwaiter().GetResult();
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='dateFrom'>
+            /// </param>
+            /// <param name='dateTo'>
+            /// </param>
+            /// <param name='cancellationToken'>
+            /// The cancellation token.
+            /// </param>
+            public static async Task<IList<KycClientStatRow>> ApiKycReportingClientStatShortByDateFromByDateToGetAsync(this IKycReportsAPI operations, System.DateTime dateFrom, System.DateTime dateTo, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                using (var _result = await operations.ApiKycReportingClientStatShortByDateFromByDateToGetWithHttpMessagesAsync(dateFrom, dateTo, null, cancellationToken).ConfigureAwait(false))
                 {
                     return _result.Body;
                 }
