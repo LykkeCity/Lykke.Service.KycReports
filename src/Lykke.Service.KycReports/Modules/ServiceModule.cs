@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Common.Log;
+using Lykke.Service.ClientAccount.Client;
 using Lykke.Service.Kyc.Abstractions.Services;
 using Lykke.Service.Kyc.Client;
 using Lykke.Service.KycReports.AzureRepositories;
@@ -62,13 +63,12 @@ namespace Lykke.Service.KycReports.Modules
 
 
             builder.RegisterInstance<IPersonalDataService>(new PersonalDataService(_personalDataServiceSettings.CurrentValue, _log));
-
             builder.RegisterType<KycReportingService>().As<IKycReportingService>().SingleInstance();
 
-
+            
             builder.RegisterType<KycStatusServiceClient>().As<IKycStatusService>().SingleInstance(); // kyc service 
             builder.RegisterInstance<KycServiceSettings>(_settings.CurrentValue.KycServiceSettings).SingleInstance(); // kyc service 
-
+            builder.RegisterLykkeServiceClient(_settings.CurrentValue.Services.ClientAccountServiceUrl);
 
             builder.Populate(_services);
         }

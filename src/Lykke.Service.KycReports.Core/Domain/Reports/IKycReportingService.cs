@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Lykke.Service.Kyc.Abstractions.Domain.Verification;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.KycReports.Core.Domain.Reports
@@ -10,5 +12,7 @@ namespace Lykke.Service.KycReports.Core.Domain.Reports
 
         Task<bool> RebuildKycOfficerStats();
         Task<bool> RebuildKycOfficersPerformance();
+
+        Task<IEnumerable<KycClientStatRow>> GetKycClientStatRows(DateTime startDate, DateTime endDate, KycStatus[] statusFilter = null);
     }
 }

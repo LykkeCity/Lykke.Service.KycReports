@@ -1,5 +1,7 @@
 ﻿
+using Lykke.Service.KycReports.AutorestClient.Models;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.KycReports.Client
@@ -11,5 +13,7 @@ namespace Lykke.Service.KycReports.Client
         Task<string> GetKycReportDailyLeadershipDataJsonAsync(DateTime dateFrom, DateTime dateTo);
         Task<bool?> RebuildKycOfficerStats();
         Task<bool?> RebuildKycOfficersPerformance();
+        Task<IList<KycClientStatRow>> GetKycClientStatsData(DateTime dateFrom, DateTime dateTo);
+        Task<IList<KycClientStatRow>> GetKycClientStatsDataShort(DateTime dateFrom, DateTime dateTo);
     }
 }
