@@ -138,12 +138,12 @@ namespace Lykke.Service.KycReports.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "kycSpiderCheckDate")]
+        [JsonProperty(PropertyName = "KycSpiderCheckDate")]
         public string KycSpiderCheckDate { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "isKycSpiderReturnMatches")]
+        [JsonProperty(PropertyName = "IsKycSpiderReturnMatches")]
         public string IsKycSpiderReturnMatches { get; set; }
 
         /// <summary>
