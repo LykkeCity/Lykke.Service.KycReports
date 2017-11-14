@@ -1,11 +1,13 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Common.Log;
+using Lykke.Service.ClientAccount.Client;
 using Lykke.Service.Kyc.Abstractions.Services;
 using Lykke.Service.Kyc.Client;
 using Lykke.Service.KycReports.AzureRepositories;
 using Lykke.Service.KycReports.Core.Domain.Reports;
 using Lykke.Service.KycReports.Core.Services;
+using Lykke.Service.KycReports.Core.Settings.ClientAccount;
 using Lykke.Service.KycReports.Core.Settings.ServiceSettings;
 using Lykke.Service.KycReports.Services;
 using Lykke.Service.KycReports.Services.Reports;
@@ -21,14 +23,16 @@ namespace Lykke.Service.KycReports.Modules
     {
         private readonly IReloadingManager<KycReportsSettings> _settings;
         private readonly IReloadingManager<PersonalDataServiceSettings> _personalDataServiceSettings;
+        private readonly IReloadingManager<ClientAccountClientSettings> _clientAccountClientSettings;
         private readonly ILog _log;
         // NOTE: you can remove it if you don't need to use IServiceCollection extensions to register service specific dependencies
         private readonly IServiceCollection _services;
 
-        public ServiceModule(IReloadingManager<KycReportsSettings> settings, IReloadingManager<PersonalDataServiceSettings> personalDataServiceSettings, ILog log)
+        public ServiceModule(IReloadingManager<KycReportsSettings> settings, IReloadingManager<PersonalDataServiceSettings> personalDataServiceSettings, IReloadingManager<ClientAccountClientSettings> clientAccountClientSettings, ILog log)
         {
             _settings = settings;
             _personalDataServiceSettings = personalDataServiceSettings;
+            _clientAccountClientSettings = clientAccountClientSettings;
             _log = log;
 
             _services = new ServiceCollection();
@@ -68,7 +72,7 @@ namespace Lykke.Service.KycReports.Modules
 
             builder.RegisterType<KycStatusServiceClient>().As<IKycStatusService>().SingleInstance(); // kyc service 
             builder.RegisterInstance<KycServiceSettings>(_settings.CurrentValue.KycServiceSettings).SingleInstance(); // kyc service 
-
+            builder.RegisterLykkeServiceClient(_clientAccountClientSettings.CurrentValue.ServiceUrl);
 
             builder.Populate(_services);
         }

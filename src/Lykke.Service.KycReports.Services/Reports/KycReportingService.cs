@@ -13,6 +13,8 @@ using Lykke.Service.KycReports.AzureRepositories.Reports;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Kyc.Abstractions.Services;
 using Lykke.Service.Kyc.Abstractions.Services.Models;
+using Lykke.Service.ClientAccount.Client;
+using Common;
 
 namespace Lykke.Service.KycReports.Services.Reports
 {
@@ -22,17 +24,23 @@ namespace Lykke.Service.KycReports.Services.Reports
         private readonly IPersonalDataService _personalDataService;
         private readonly ILog _log;
         private readonly IKycStatusService _kycStatusService;
+        private readonly IClientAccountClient _clientAccountService;
+        private readonly IPartnersClient _partnersService;
 
         public KycReportingService(
             IKycReportsRepository reportRepository,
             ILog log,
             IPersonalDataService personalDataService,
-            IKycStatusService kycStatusService)
+            IKycStatusService kycStatusService,
+            IClientAccountClient clientAccountService,
+            IPartnersClient partnersService)
         {
             _reportRepository = reportRepository;
             _personalDataService = personalDataService;
             _log = log;
             _kycStatusService = kycStatusService;
+            _clientAccountService = clientAccountService;
+            _partnersService = partnersService;
         }
 
         public async Task<string> GetKycOfficerStatsJsonAsync(DateTime dateFrom, DateTime dateTo)
@@ -111,19 +119,19 @@ namespace Lykke.Service.KycReports.Services.Reports
                 return new List<string>();
 
 
-            await GenerateKycOfficerStats(startDate);
+            await GenerateKycOfficerStats(startDate, true);
             var jsonReport = await _reportRepository.GetKycOfficerStatsJsonRows(startDate, endDate);
 
             return jsonReport.Where(jRow => !jRow.Contains(KycOfficerStatsDataReport.EmptyDayKycOfficer));
         }
 
-        private async Task<IEnumerable<KycOfficerStatsDataReport>> GenerateKycOfficerStats(DateTime from)
+        private async Task<bool> GenerateKycOfficerStats(DateTime from, bool isExcludeExistedRows)
         {
             var startDate = from;
             var endDate = DateTime.Today.AddDays(-1);
 
             if (startDate > endDate)
-                return new List<KycOfficerStatsDataReport>(0);
+                return false;
 
             var datesArray = Enumerable.Range(0, 1 + endDate.Subtract(startDate).Days)
                   .Select(offset => startDate.AddDays(offset))
@@ -131,17 +139,17 @@ namespace Lykke.Service.KycReports.Services.Reports
 
             List<KycStatusLogRecord> auditLogEntities = null;
 
-            var report = new List<KycOfficerStatsDataReport>();
+            var isGeneratedOk = true;
 
             foreach (var startOfDay in datesArray)
             {
                 try
                 {
-                    var existedJsonRows = await _reportRepository.GetKycOfficerStatsJsonRows(startOfDay, startOfDay);
-                    if (existedJsonRows.Any())
+                    if (isExcludeExistedRows)
                     {
-                        report.AddRange(existedJsonRows.Select(JsonConvert.DeserializeObject<KycOfficerStatsDataReport>));
-                        continue;
+                        var existedJsonRows = await _reportRepository.GetKycOfficerStatsJsonRows(startOfDay, startOfDay);
+                        if (existedJsonRows.Any())
+                            continue;
                     }
 
                     if (auditLogEntities == null)
@@ -152,7 +160,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                     var itemsTodayGroups =
                         auditLogEntities.Where(i => i.Date >= startOfDay && i.Date < startOfDay.AddDays(1))
                             .OrderBy(i => i.Date)
-                            .GroupBy(i => i.KycOfficer)
+                            .GroupBy(i => (KycOfficer: i.KycOfficer, PartnerName: i.PartnerName))
                             .ToList();
 
                     if (!itemsTodayGroups.Any())
@@ -161,17 +169,19 @@ namespace Lykke.Service.KycReports.Services.Reports
                         {
                             ReportDay = startOfDay,
                             KycOfficer = KycOfficerStatsDataReport.EmptyDayKycOfficer,
+                            PartnerName = string.Empty,
                             OnBoardedCount = -1,
                             DeclinedCount = -1,
                             ToResubmitCount = -1
                         };
-                        report.Add(reportRow);
+
                         await _reportRepository.InsertRow(reportRow);
                     }
 
                     foreach (var itemsToday in itemsTodayGroups)
                     {
-                        var kycOfficer = itemsToday.Key;
+                        var kycOfficer = itemsToday.Key.KycOfficer;
+                        var partnerName = itemsToday.Key.PartnerName;
 
                         var onBoardedCount = itemsToday
                             .Count(i => (i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) 
@@ -188,96 +198,29 @@ namespace Lykke.Service.KycReports.Services.Reports
                         {
                             ReportDay = startOfDay,
                             KycOfficer = kycOfficer,
+                            PartnerName = partnerName,
                             OnBoardedCount = onBoardedCount,
                             DeclinedCount = declinedCount,
                             ToResubmitCount = toResubmitCount
                         };
-                        report.Add(reportRow);
+
                         await _reportRepository.InsertRow(reportRow);
                     }
                 }
                 catch (Exception ex)
                 {
                     await _log.WriteErrorAsync("SrvReports", "GenerateKycOfficerStats (insert new rows)", startOfDay.ToString(), ex);
+                    isGeneratedOk = false;
                 }
-
-
             }
 
-            return report;
+            return isGeneratedOk;
         }
 
         public async Task<bool> RebuildKycOfficerStats()
         {
             var startDate = DateTime.Today.AddDays(-14);
-            var endDate = DateTime.Today;
-            
-            var datesArray = Enumerable.Range(0, 1 + endDate.Subtract(startDate).Days)
-                  .Select(offset => startDate.AddDays(offset))
-                  .ToArray();
-
-
-            var auditLogEntities = await GetKycStatusLogRecords(startDate, endDate);
-
-            foreach (var startOfDay in datesArray)
-            {
-                try
-                {
-                    var itemsTodayGroups =
-                        auditLogEntities.Where(i => i.Date >= startOfDay && i.Date < startOfDay.AddDays(1))
-                            .OrderBy(i => i.Date)
-                            .GroupBy(i => i.KycOfficer)
-                            .ToList();
-
-                    if (!itemsTodayGroups.Any())
-                    {
-                        var reportRow = new KycOfficerStatsDataReport()
-                        {
-                            ReportDay = startOfDay,
-                            KycOfficer = KycOfficerStatsDataReport.EmptyDayKycOfficer,
-                            OnBoardedCount = -1,
-                            DeclinedCount = -1,
-                            ToResubmitCount = -1
-                        };
-                        await _reportRepository.InsertRow(reportRow);
-                    }
-
-                    foreach (var itemsToday in itemsTodayGroups)
-                    {
-                        var kycOfficer = itemsToday.Key;
-
-                        var onBoardedCount = itemsToday
-                            .Count(i => (i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) 
-                                        && i.StatusPrevious == KycStatus.Pending);
-
-                        var declinedCount = itemsToday
-                            .Count(i => (i.StatusCurrent == KycStatus.RestrictedArea || i.StatusCurrent == KycStatus.Rejected)
-                                        && i.StatusPrevious == KycStatus.Pending);
-
-                        var toResubmitCount = itemsToday
-                            .Count(i => i.StatusCurrent == KycStatus.NeedToFillData && i.StatusPrevious == KycStatus.Pending);
-
-                        var reportRow = new KycOfficerStatsDataReport()
-                        {
-                            ReportDay = startOfDay,
-                            KycOfficer = kycOfficer,
-                            OnBoardedCount = onBoardedCount,
-                            DeclinedCount = declinedCount,
-                            ToResubmitCount = toResubmitCount
-                        };
-                        await _reportRepository.InsertRow(reportRow);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await _log.WriteErrorAsync("SrvReports", "GenerateKycOfficerStats (insert new rows)", startOfDay.ToString(), ex);
-                    return false;
-                }
-
-
-            }
-
-            return true;
+            return await GenerateKycOfficerStats(startDate, false);
         }
         
         private async Task<IEnumerable<string>> GetKycOfficersPerformanceJsonRows(DateTime startDate, DateTime endDate)
@@ -510,6 +453,7 @@ namespace Lykke.Service.KycReports.Services.Reports
             f.DatePeriod.EndDate = endDate;
 
             IEnumerable<IKycStatuschangeItem> items = await _kycStatusService.GetRecordsForPeriodAsync(f);
+            var partnersDic = (await _partnersService.GetPartnersAsync()).ToDictionary(keyVal => keyVal.PublicId, keyVal => keyVal.Name);
 
             var auditLogEntities = (items)?
                             .Select(item =>
@@ -524,7 +468,22 @@ namespace Lykke.Service.KycReports.Services.Reports
                                 else
                                     return null;
 
-                                return new KycStatusLogRecord(item.ClientId, status, previousStatus, item.CreatedTime, kycOfficer);
+                                var partnerName = "Lykke Wallet";
+                                var client = (_clientAccountService.GetByIdAsync(item.ClientId)).Result;
+                                if (client?.PartnerId != null)
+                                {
+                                    if (partnersDic.TryGetValue(client.PartnerId, out string name))
+                                    {
+                                        partnerName = name;
+                                    }
+                                    else
+                                    {
+                                        partnerName = null;
+                                        _log.WriteWarningAsync("GetKycStatusLogRecords", new { startDate, endDate }.ToJson(), $"Cannot find Partner with ID = {client.PartnerId}");
+                                    }
+                                }
+
+                                return new KycStatusLogRecord(item.ClientId, status, previousStatus, item.CreatedTime, kycOfficer, partnerName);
                             }).Where(item => item != null).ToList();
 
             return auditLogEntities;
