@@ -6,6 +6,7 @@ namespace Lykke.Service.KycReports.AzureRepositories.Reports
     {
         DateTime ReportDay { get; }
         string KycOfficer { get; }
+        string PartnerName { get; }
         int OnBoardedCount { get; }
         int DeclinedCount { get; }
         int ToResubmitCount { get; }
