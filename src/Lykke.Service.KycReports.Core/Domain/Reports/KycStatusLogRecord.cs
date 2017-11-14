@@ -12,14 +12,16 @@ namespace Lykke.Service.KycReports.AzureRepositories.Reports
         public KycStatus StatusPrevious { get; set; }
         public DateTime Date { get; set; }
         public string KycOfficer { get; set; }
+        public string PartnerName { get; set; }
 
-        public KycStatusLogRecord(string clientId, KycStatus statusCurrent, KycStatus statusPrevious, DateTime date, string kycOfficer)
+        public KycStatusLogRecord(string clientId, KycStatus statusCurrent, KycStatus statusPrevious, DateTime date, string kycOfficer, string partnerName)
         {
             ClientId = clientId;
             StatusCurrent = statusCurrent;
             StatusPrevious = statusPrevious;
             Date = date;
             KycOfficer = kycOfficer;
+            PartnerName = partnerName;
         }
 
         public override string ToString()
