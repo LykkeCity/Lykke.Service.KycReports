@@ -65,7 +65,8 @@ namespace Lykke.Service.KycReports.Controllers
         [Route("clientStatShort/{dateFrom}/{dateTo}")]
         public async Task<IEnumerable<KycClientStatRow>> GetKycClientStatsDataShort(DateTime dateFrom, DateTime dateTo)
         {
-            return await _kycReportingService.GetKycClientStatRows(dateFrom, dateTo, new KycStatus[] { KycStatus.Ok, KycStatus.ReviewDone });
+            var rows = await _kycReportingService.GetKycClientStatRows(dateFrom, dateTo, new KycStatus[] { KycStatus.Ok, KycStatus.ReviewDone });
+            return rows;
         }
 
     }

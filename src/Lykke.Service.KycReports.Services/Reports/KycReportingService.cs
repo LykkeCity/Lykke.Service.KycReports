@@ -781,8 +781,8 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                 r.Id = item.ClientId;
                 r.IsBanned = bannedClients.Contains(item.ClientId) ? "Yes" : "No";
-                r.kycSpiderCheckDate = kycSpiderCheckPersonResult.ContainsKey(item.ClientId) ? kycSpiderCheckPersonResult[item.ClientId].Item2 : "";
-                r.isKycSpiderReturnMatches = kycSpiderCheckPersonResult.ContainsKey(item.ClientId) ? kycSpiderCheckPersonResult[item.ClientId].Item1 : "";
+                r.KycSpiderCheckDate = kycSpiderCheckPersonResult.ContainsKey(item.ClientId) ? kycSpiderCheckPersonResult[item.ClientId].Item2 : "";
+                r.IsKycSpiderReturnMatches = kycSpiderCheckPersonResult.ContainsKey(item.ClientId) ? kycSpiderCheckPersonResult[item.ClientId].Item1 : "";
 
                 IPersonalData pd;
                 if (personalDataDict.TryGetValue(item.ClientId, out pd))

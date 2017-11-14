@@ -23,8 +23,8 @@ namespace Lykke.Service.KycReports.Core.Domain.Reports
         public string IsZipNotEmpty { get; set; }
         public string IsPhoneInAnotherAccount { get; set; }
         public string IsBanned { get; set; }
-        public string kycSpiderCheckDate { get; set; }
-        public string isKycSpiderReturnMatches { get; set; }
+        public string KycSpiderCheckDate { get; set; }
+        public string IsKycSpiderReturnMatches { get; set; }
 
 
     }
