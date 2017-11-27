@@ -13,7 +13,9 @@ using Lykke.Service.KycReports.AzureRepositories.Reports;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Kyc.Abstractions.Services;
 using Lykke.Service.Kyc.Abstractions.Services.Models;
+using Lykke.Service.PersonalData.Contract.Models;
 using Lykke.Service.ClientAccount.Client;
+using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Common;
 
 namespace Lykke.Service.KycReports.Services.Reports
@@ -31,9 +33,9 @@ namespace Lykke.Service.KycReports.Services.Reports
             IKycReportsRepository reportRepository,
             ILog log,
             IPersonalDataService personalDataService,
-            IKycStatusService kycStatusService,
             IClientAccountClient clientAccountService,
-            IPartnersClient partnersService)
+            IPartnersClient partnersService,
+            IKycStatusService kycStatusService)
         {
             _reportRepository = reportRepository;
             _personalDataService = personalDataService;
@@ -629,5 +631,130 @@ namespace Lykke.Service.KycReports.Services.Reports
 
         //    return report.Select(kv => kv.Value);
         //}
+
+
+        public async Task<IEnumerable<KycClientStatRow>> GetKycClientStatRows(DateTime startDate, DateTime endDate, KycStatus[] statusFilter = null)
+        {
+            string displayDateFormat = "dd-MM-yyyy";
+            List<KycClientStatRow> result = new List<KycClientStatRow>();
+
+            startDate = new DateTime(startDate.Year, startDate.Month, startDate.Day);
+
+            if (endDate < startDate)
+            {
+                return result;
+            }
+
+            ReportFilter f = new ReportFilter();
+            f.DatePeriod = new DatePeriod { StartDate = startDate, EndDate = endDate };
+            f.StatusFilter = statusFilter;
+
+            var auditLogEntities = await _kycStatusService.GetRecordsForPeriodAsync(f);
+            IEnumerable<string> allClientIds = auditLogEntities.Select(_ => _.ClientId).Distinct();
+            if (allClientIds.Count() == 0)
+            {
+                return result;
+            }
+            IEnumerable<IPersonalData> clients = await _personalDataService.GetAsync(allClientIds);
+            var personalDataDict = clients.ToDictionary(_ => _.Id, _ => _);
+            var clientPartnerIdsDict = await _clientAccountService.GetPartnerIdsAsync(clients.Select(_ => _.Email).ToArray());
+            List<string> allPartnerIds = new List<string>();
+            allPartnerIds.AddRange(clientPartnerIdsDict.Values.SelectMany(_ => _).Distinct());
+            IEnumerable<Partner> partners = await _partnersService.FindByPublicIdsAsync(allPartnerIds);
+            Dictionary<string, Partner> partnerDict = partners.ToDictionary(_ => _.PublicId, _ => _);
+
+            HashSet<string> dubbedPhones = new HashSet<string>();
+            HashSet<string> phones = new HashSet<string>();
+            var clientsAndPhones = await _clientAccountService.GetClientsByPhonesAsync(clients.Select(_ => _.ContactPhone).Where(_ => !String.IsNullOrWhiteSpace(_)).ToArray());
+            foreach (KeyValuePair<string, string> t in clientsAndPhones)
+            {
+                string phone = t.Value;
+                if (!phones.Contains(phone))
+                {
+                    phones.Add(phone);
+                }
+                else
+                {
+                    dubbedPhones.Add(phone);
+                }
+            }
+
+            IList<string> clientIds = clients.Select(_ => _.Id).ToList();
+            var bannedClientIds = await _clientAccountService.GetBannedClientsAsync(clientIds);
+            var bannedClients = new HashSet<string>(bannedClientIds);
+
+            Dictionary<string, Tuple<string, string>> kycSpiderCheckPersonResult = new Dictionary<string, Tuple<string, string>>();
+
+            IEnumerable<IKycCheckPersonResult> cpRes = await _kycStatusService.GetCheckPersonResultAsync(clientIds.ToArray());
+            foreach (IKycCheckPersonResult res in cpRes)
+            {
+                if (res != null)
+                {
+                    if (res.PersonProfiles != null && res.PersonProfiles.Count() > 0)
+                    {
+                        kycSpiderCheckPersonResult[res.Id] = new Tuple<string, string>("Yes", res.CheckDate.ToString(displayDateFormat));
+                    }
+                    else
+                    {
+                        kycSpiderCheckPersonResult[res.Id] = new Tuple<string, string>("No", res.CheckDate.ToString(displayDateFormat));
+                    }
+                }
+            }
+
+            foreach (Lykke.Service.Kyc.Abstractions.Domain.Verification.IKycStatuschangeItem item in auditLogEntities)
+            {
+                KycClientStatRow r = new KycClientStatRow();
+                r.KycOfficer = item.Changer;
+                r.KycStatus = ((Lykke.Service.Kyc.Abstractions.Domain.Verification.KycStatus)item.CurrentStatus).ToString();
+                r.ChangeDate = item.CreatedTime;
+                r.Date = item.CreatedTime.ToString(displayDateFormat);
+
+                IList<string> partnerIds;
+                if (clientPartnerIdsDict.TryGetValue(item.ClientId, out partnerIds))
+                {
+                    List<string> partnerInfo = new List<string>();
+                    foreach (string partnerId in partnerIds)
+                    {
+                        Partner partnerData;
+                        if (partnerDict.TryGetValue(partnerId, out partnerData))
+                        {
+                            partnerInfo.Add(partnerId + "/" + partnerData.Name);
+                        }
+                        else
+                        {
+                            partnerInfo.Add(partnerId);
+                        }
+                    }
+                    r.PartnerIdName = String.Join(", ", partnerInfo.ToArray());
+                }
+
+                r.Id = item.ClientId;
+                r.IsBanned = bannedClients.Contains(item.ClientId) ? "Yes" : "No";
+                r.KycSpiderCheckDate = kycSpiderCheckPersonResult.ContainsKey(item.ClientId) ? kycSpiderCheckPersonResult[item.ClientId].Item2 : "";
+                r.IsKycSpiderReturnMatches = kycSpiderCheckPersonResult.ContainsKey(item.ClientId) ? kycSpiderCheckPersonResult[item.ClientId].Item1 : "";
+
+                IPersonalData pd;
+                if (personalDataDict.TryGetValue(item.ClientId, out pd))
+                {
+                    r.CountryFromID = pd.CountryFromID;
+                    r.CountryFromPOA = pd.CountryFromPOA;
+                    r.CountryFromIP = pd.Country;
+                    r.IsDateOfBirthNotEmpty = pd.DateOfBirth == null ? "No" : "Yes";
+                    r.DateOfPoaDocument = pd.DateOfPoaDocument?.ToString(displayDateFormat);
+                    r.DateOfExpiryOfID = pd.DateOfExpiryOfID?.ToString(displayDateFormat);
+                    r.IsAddressNotEmpty = String.IsNullOrWhiteSpace(pd.Address) ? "No" : "Yes";
+                    r.IsCityNotEmpty = String.IsNullOrWhiteSpace(pd.City) ? "No" : "Yes";
+                    r.IsZipNotEmpty = String.IsNullOrWhiteSpace(pd.Zip) ? "No" : "Yes";
+                    r.IsPhoneInAnotherAccount = dubbedPhones.Contains(pd.ContactPhone) ? "Yes" : "No";
+                }
+
+                result.Add(r);
+            }
+
+            IEnumerable<KycClientStatRow> sortedResult = result.OrderByDescending(_ => _.ChangeDate);
+
+            return sortedResult;
+        }
+
     }
 }

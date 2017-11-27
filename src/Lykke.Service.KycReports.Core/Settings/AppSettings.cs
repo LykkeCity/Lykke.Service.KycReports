@@ -1,6 +1,4 @@
-﻿using Lykke.Service.KycReports.Core.Settings.ClientAccount;
-using Lykke.Service.KycReports.Core.Settings.ServiceSettings;
-using Lykke.Service.KycReports.Core.Settings.SlackNotifications;
+﻿using Lykke.Service.KycReports.Core.Settings.SlackNotifications;
 using Lykke.Service.PersonalData.Settings;
 
 namespace Lykke.Service.KycReports.Core.Settings
@@ -10,6 +8,5 @@ namespace Lykke.Service.KycReports.Core.Settings
         public KycReportsSettings KycReportService { get; set; }
         public PersonalDataServiceSettings PersonalDataServiceSettings { get; set; }
         public SlackNotificationsSettings SlackNotifications { get; set; }
-        public ClientAccountClientSettings ClientAccountClient { get; set; }
     }
 }

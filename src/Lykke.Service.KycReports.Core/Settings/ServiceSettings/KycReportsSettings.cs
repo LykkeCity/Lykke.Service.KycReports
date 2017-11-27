@@ -1,7 +1,7 @@
 ﻿using Lykke.Service.Kyc.Client;
 using Lykke.Service.PersonalData.Settings;
 
-namespace Lykke.Service.KycReports.Core.Settings.ServiceSettings
+namespace Lykke.Service.KycReports.Core.Settings
 {
     public class KycReportsSettings
     {
