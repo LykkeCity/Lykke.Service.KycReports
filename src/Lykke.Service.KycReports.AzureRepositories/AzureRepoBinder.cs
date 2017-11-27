@@ -5,7 +5,7 @@ using AzureStorage.Tables;
 using Common.Log;
 
 using Lykke.Service.KycReports.AzureRepositories.Reports;
-using Lykke.Service.KycReports.Core.Settings.ServiceSettings;
+using Lykke.Service.KycReports.Core.Settings;
 using Lykke.SettingsReader;
 
 namespace Lykke.Service.KycReports.AzureRepositories

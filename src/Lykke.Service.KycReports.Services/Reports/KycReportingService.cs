@@ -16,7 +16,6 @@ using Lykke.Service.Kyc.Abstractions.Services.Models;
 using Lykke.Service.PersonalData.Contract.Models;
 using Lykke.Service.ClientAccount.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
-using Lykke.Service.ClientAccount.Client;
 using Common;
 
 namespace Lykke.Service.KycReports.Services.Reports
@@ -28,7 +27,6 @@ namespace Lykke.Service.KycReports.Services.Reports
         private readonly ILog _log;
         private readonly IKycStatusService _kycStatusService;
         private readonly IClientAccountClient _clientAccountService;
-        private readonly IBannedClientsClient _bannedClientsService;
         private readonly IPartnersClient _partnersService;
 
         public KycReportingService(
@@ -36,7 +34,6 @@ namespace Lykke.Service.KycReports.Services.Reports
             ILog log,
             IPersonalDataService personalDataService,
             IClientAccountClient clientAccountService,
-            IBannedClientsClient bannedClientsService,
             IPartnersClient partnersService,
             IKycStatusService kycStatusService)
         {
@@ -45,7 +42,6 @@ namespace Lykke.Service.KycReports.Services.Reports
             _log = log;
             _kycStatusService = kycStatusService;
             _clientAccountService = clientAccountService;
-            _bannedClientsService = bannedClientsService;
             _partnersService = partnersService;
         }
 
@@ -684,7 +680,7 @@ namespace Lykke.Service.KycReports.Services.Reports
             }
 
             IList<string> clientIds = clients.Select(_ => _.Id).ToList();
-            var bannedClientIds = await _bannedClientsService.GetBannedClients(clientIds);
+            var bannedClientIds = await _clientAccountService.GetBannedClientsAsync(clientIds);
             var bannedClients = new HashSet<string>(bannedClientIds);
 
             Dictionary<string, Tuple<string, string>> kycSpiderCheckPersonResult = new Dictionary<string, Tuple<string, string>>();

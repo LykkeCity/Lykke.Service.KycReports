@@ -1,4 +1,4 @@
-﻿namespace Lykke.Service.KycReports.Core.Settings.ServiceSettings
+﻿namespace Lykke.Service.KycReports.Core.Settings
 {
     public class DbSettings
     {
