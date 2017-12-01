@@ -14,7 +14,7 @@ namespace Lykke.Service.KycReports.AzureRepositories.Reports
         public string RowId => $"{ReportDay.Ticks}_{KycOfficerNormalized}_{PartnerNameNormalized}";
 
         private string KycOfficerNormalized => KycOfficer.ToLower().Trim().Replace(' ', '-').Replace('#', '-');
-        private string PartnerNameNormalized => PartnerName.ToLower().Trim().Replace(' ', '-').Replace('#', '-');
+        private string PartnerNameNormalized => PartnerName?.ToLower().Trim().Replace(' ', '-').Replace('#', '-');
 
         public static string EmptyDayKycOfficer => "### NO_DATA_TODAY ###"; // to determine rows when there were no recods (no need generate data for these days again
         
