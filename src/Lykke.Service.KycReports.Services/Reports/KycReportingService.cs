@@ -695,8 +695,8 @@ namespace Lykke.Service.KycReports.Services.Reports
             }
 
             IList<string> clientIds = clients.Select(_ => _.Id).ToList();
-            var bannedClientIds = await _clientAccountService.GetBannedClientsAsync(clientIds);
-            var bannedClients = new HashSet<string>(bannedClientIds);
+            var bannedClients = await _clientAccountService.GetBannedClientsAsync(clientIds);
+            var bannedClientIds = new HashSet<string>(bannedClients.Select(_ => _.ClientId));
 
             Dictionary<string, Tuple<string, string>> kycSpiderCheckPersonResult = new Dictionary<string, Tuple<string, string>>();
 
@@ -744,7 +744,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                 }
 
                 r.Id = item.ClientId;
-                r.IsBanned = bannedClients.Contains(item.ClientId) ? "Yes" : "No";
+                r.IsBanned = bannedClientIds.Contains(item.ClientId) ? "Yes" : "No";
                 r.KycSpiderCheckDate = kycSpiderCheckPersonResult.ContainsKey(item.ClientId) ? kycSpiderCheckPersonResult[item.ClientId].Item2 : "";
                 r.IsKycSpiderReturnMatches = kycSpiderCheckPersonResult.ContainsKey(item.ClientId) ? kycSpiderCheckPersonResult[item.ClientId].Item1 : "";
 
