@@ -187,17 +187,15 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         var onBoardedCount = itemsToday
                             .Count(i => (
-                                (i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) && i.StatusPrevious == KycStatus.Pending) ||
-                                (i.StatusCurrent == KycStatus.ReviewDone && (i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
+                                (i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) && i.StatusPrevious == KycStatus.Pending || i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk) // https://lykkex.atlassian.net/browse/LWDEV-4045
                             );
 
                         var declinedCount = itemsToday
-                            .Count(i => (i.StatusCurrent == KycStatus.RestrictedArea || i.StatusCurrent == KycStatus.Rejected) && i.StatusPrevious == KycStatus.Pending);
+                            .Count(i => (i.StatusCurrent == KycStatus.RestrictedArea || i.StatusCurrent == KycStatus.Rejected) && (i.StatusPrevious == KycStatus.Pending || i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk)); // https://lykkex.atlassian.net/browse/LWDEV-4045
 
                         var toResubmitCount = itemsToday
                             .Count(i => 
-                                ((i.StatusCurrent == KycStatus.NeedToFillData && i.StatusPrevious == KycStatus.Pending)) ||
-                                (i.StatusCurrent == KycStatus.NeedToFillData && (i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
+                                (i.StatusCurrent == KycStatus.NeedToFillData && (i.StatusPrevious == KycStatus.Pending || i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
                             );
 
                         var reportRow = new KycOfficerStatsDataReport()
@@ -292,8 +290,7 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         var onBoarded = itemsToday
                             .Where(row => 
-                                ((row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && row.StatusPrevious == KycStatus.Pending) ||
-                                (row.StatusPrevious == KycStatus.ReviewDone && (row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
+                                ((row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
                             )
                             .Select(row => new KycOfficersPerformanceRow() {
                                 ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.OnBoarded, ClientId = row.ClientId
@@ -303,7 +300,7 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         var declined = itemsToday
                             .Where(row => 
-                                ((row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && row.StatusPrevious == KycStatus.Pending)
+                                ((row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
                             )
                             .Select(row => new KycOfficersPerformanceRow() {
                                 ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.Declined, ClientId = row.ClientId
@@ -313,8 +310,7 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         var toResubmit = itemsToday
                             .Where(row => 
-                                (row.StatusCurrent == KycStatus.NeedToFillData && row.StatusPrevious == KycStatus.Pending) ||
-                                (row.StatusPrevious == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
+                                (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
                             )
                             .Select(row => new KycOfficersPerformanceRow() {
                                 ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.ToResubmit, ClientId = row.ClientId
@@ -394,8 +390,7 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         var onBoarded = itemsToday
                             .Where(row => (
-                                (row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && row.StatusPrevious == KycStatus.Pending) ||
-                                (row.StatusPrevious == KycStatus.ReviewDone && (row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
+                                (row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
                             )
                             .Select(row => new KycOfficersPerformanceRow() {
                                 ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.OnBoarded, ClientId = row.ClientId
@@ -404,8 +399,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                         reportRows.AddRange(onBoarded);
 
                         var declined = itemsToday
-                            .Where(row => (row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected)
-                                        && row.StatusPrevious == KycStatus.Pending)
+                            .Where(row => (row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
                             .Select(row => new KycOfficersPerformanceRow() {
                                 ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.Declined, ClientId = row.ClientId
                             })
@@ -414,8 +408,7 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         var toResubmit = itemsToday
                             .Where(row => 
-                                (row.StatusCurrent == KycStatus.NeedToFillData && row.StatusPrevious == KycStatus.Pending) ||
-                                (row.StatusPrevious == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
+                                (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
                             )
                             .Select(row => new KycOfficersPerformanceRow() {
                                 ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.ToResubmit, ClientId = row.ClientId
