@@ -187,7 +187,7 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         var onBoardedCount = itemsToday
                             .Count(i => (
-                                (i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) && i.StatusPrevious == KycStatus.Pending || i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk) // https://lykkex.atlassian.net/browse/LWDEV-4045
+                                (i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) && (i.StatusPrevious == KycStatus.Pending || i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk)) // https://lykkex.atlassian.net/browse/LWDEV-4045
                             );
 
                         var declinedCount = itemsToday
