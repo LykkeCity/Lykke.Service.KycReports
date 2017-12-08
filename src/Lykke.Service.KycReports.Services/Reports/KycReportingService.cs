@@ -463,7 +463,12 @@ namespace Lykke.Service.KycReports.Services.Reports
             f.DatePeriod.EndDate = endDate;
 
             IEnumerable<IKycStatuschangeItem> items = await _kycStatusService.GetRecordsForPeriodAsync(f);
-            var partnersDic = (await _partnersService.GetPartnersAsync()).ToDictionary(keyVal => keyVal.PublicId, keyVal => keyVal.Name);
+            IEnumerable<Partner> partners = await _partnersService.GetPartnersAsync();
+            Dictionary<string, string> partnersDict = new Dictionary<string, string>();
+            foreach (Partner p in partners)
+            {
+                partnersDict[p.PublicId] = p.Name;
+            }
 
             var auditLogEntities = (items)?
                             .Select(item =>
@@ -482,7 +487,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                                 var client = (_clientAccountService.GetByIdAsync(item.ClientId)).Result;
                                 if (client?.PartnerId != null)
                                 {
-                                    if (partnersDic.TryGetValue(client.PartnerId, out string name))
+                                    if (partnersDict.TryGetValue(client.PartnerId, out string name))
                                     {
                                         partnerName = name;
                                     }
@@ -668,9 +673,14 @@ namespace Lykke.Service.KycReports.Services.Reports
             var clientPartnerIdsDict = await _clientAccountService.GetPartnerIdsAsync(clients.Select(_ => _.Email).ToArray());
             List<string> allPartnerIds = new List<string>();
             allPartnerIds.AddRange(clientPartnerIdsDict.Values.SelectMany(_ => _).Distinct());
-            IEnumerable<Partner> partners = await _partnersService.FindByPublicIdsAsync(allPartnerIds);
-            Dictionary<string, Partner> partnerDict = partners.ToDictionary(_ => _.PublicId, _ => _);
 
+            IEnumerable<Partner> partners = await _partnersService.GetPartnersAsync();
+            Dictionary<string, Partner> partnersDict = new Dictionary<string, Partner>();
+            foreach (Partner p in partners)
+            {
+                partnersDict[p.PublicId] = p;
+            }
+            
             HashSet<string> dubbedPhones = new HashSet<string>();
             HashSet<string> phones = new HashSet<string>();
             var clientsAndPhones = await _clientAccountService.GetClientsByPhonesAsync(clients.Select(_ => _.ContactPhone).Where(_ => !String.IsNullOrWhiteSpace(_)).ToArray());
@@ -724,7 +734,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                     foreach (string partnerId in partnerIds)
                     {
                         Partner partnerData;
-                        if (partnerDict.TryGetValue(partnerId, out partnerData))
+                        if (partnersDict.TryGetValue(partnerId, out partnerData))
                         {
                             partnerInfo.Add(partnerId + "/" + partnerData.Name);
                         }
