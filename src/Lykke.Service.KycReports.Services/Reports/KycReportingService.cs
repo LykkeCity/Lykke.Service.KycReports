@@ -22,6 +22,10 @@ namespace Lykke.Service.KycReports.Services.Reports
 {
     public class KycReportingService : IKycReportingService
     {
+        private const string lykkeWalletPartnerName = "Lykke Wallet";
+        private const string displayDateFormat = "dd-MM-yyyy";
+        private const string boChanger = "BackOffice: ";
+
         private readonly IKycReportsRepository _reportRepository;
         private readonly IPersonalDataService _personalDataService;
         private readonly ILog _log;
@@ -100,7 +104,6 @@ namespace Lykke.Service.KycReports.Services.Reports
         {
             startDate = new DateTime(startDate.Year, startDate.Month, startDate.Day);
 
-            //var yesterday = DateTime.Today.AddDays(-1);
             var today = DateTime.Today;
             if (endDate > today)
                 endDate = today;
@@ -119,9 +122,6 @@ namespace Lykke.Service.KycReports.Services.Reports
         {
             var startDate = from;
             var endDate = DateTime.Today.AddDays(-1);
-
-            if (startDate > endDate)
-                return false;
 
             var datesArray = Enumerable.Range(0, 1 + endDate.Subtract(startDate).Days)
                   .Select(offset => startDate.AddDays(offset))
@@ -149,7 +149,6 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                     var itemsTodayGroups =
                         auditLogEntities.Where(i => i.Date >= startOfDay && i.Date < startOfDay.AddDays(1))
-                            .OrderBy(i => i.Date)
                             .GroupBy(i => (KycOfficer: i.KycOfficer, PartnerName: i.PartnerName))
                             .ToList();
 
@@ -173,18 +172,25 @@ namespace Lykke.Service.KycReports.Services.Reports
                         var kycOfficer = itemsToday.Key.KycOfficer;
                         var partnerName = itemsToday.Key.PartnerName;
 
-                        var onBoardedCount = itemsToday
-                            .Count(i => (
-                                (i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) && (i.StatusPrevious == KycStatus.Pending))
-                            );
+                        int onBoardedCount = 0;
+                        int declinedCount = 0;
+                        int toResubmitCount = 0;
 
-                        var declinedCount = itemsToday
-                            .Count(i => (i.StatusCurrent == KycStatus.RestrictedArea || i.StatusCurrent == KycStatus.Rejected) && (i.StatusPrevious == KycStatus.Pending));
-
-                        var toResubmitCount = itemsToday
-                            .Count(i => 
-                                (i.StatusCurrent == KycStatus.NeedToFillData && (i.StatusPrevious == KycStatus.Pending))
-                            );
+                        foreach (var i in itemsToday.OrderBy(i => i.Date))
+                        {
+                            if ((i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) && (i.StatusPrevious == KycStatus.Pending))
+                            {
+                                onBoardedCount++;
+                            }
+                            if ((i.StatusCurrent == KycStatus.RestrictedArea || i.StatusCurrent == KycStatus.Rejected) && (i.StatusPrevious == KycStatus.Pending))
+                            {
+                                declinedCount++;
+                            }
+                            if (i.StatusCurrent == KycStatus.NeedToFillData && (i.StatusPrevious == KycStatus.Pending))
+                            {
+                                toResubmitCount++;
+                            }
+                        }
 
                         var reportRow = new KycOfficerStatsDataReport()
                         {
@@ -239,9 +245,6 @@ namespace Lykke.Service.KycReports.Services.Reports
             var startDate = from;
             var endDate = DateTime.Today.AddDays(-1);
 
-            if (startDate > endDate)
-                return new List<KycOfficersPerformanceRow>(0);
-            
             var datesArray = Enumerable.Range(0, 1 + endDate.Subtract(startDate).Days)
                   .Select(offset => startDate.AddDays(offset))
                   .ToArray();
@@ -265,7 +268,6 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                     var itemsTodayGroups =
                         auditLogEntities.Where(i => i.Date >= startOfDay && i.Date < startOfDay.AddDays(1))
-                            .OrderBy(i => i.Date)
                             .GroupBy(i => i.KycOfficer)
                             .ToList();
 
@@ -276,34 +278,49 @@ namespace Lykke.Service.KycReports.Services.Reports
                     {
                         var kycOfficer = itemsToday.Key;
 
-                        var onBoarded = itemsToday
-                            .Where(row => 
-                                ((row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending))
-                            )
-                            .Select(row => new KycOfficersPerformanceRow() {
-                                ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.OnBoarded, ClientId = row.ClientId
-                            })
-                            .ToList();
+                        List<KycOfficersPerformanceRow> onBoarded = new List<KycOfficersPerformanceRow>();
+                        List<KycOfficersPerformanceRow> declined = new List<KycOfficersPerformanceRow>();
+                        List<KycOfficersPerformanceRow> toResubmit = new List<KycOfficersPerformanceRow>();
+
+                        foreach(var row in itemsToday.OrderBy(i => i.Date))
+                        {
+                            if ((row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending))
+                            {
+                                onBoarded.Add(
+                                    new KycOfficersPerformanceRow()
+                                    {
+                                        ReportDay = startOfDay,
+                                        KycOfficer = kycOfficer,
+                                        Operation = KycOfficerReportOperationType.OnBoarded,
+                                        ClientId = row.ClientId
+                                    });
+                            }
+                            if ((row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending))
+                            {
+                                declined.Add(
+                                    new KycOfficersPerformanceRow()
+                                    {
+                                        ReportDay = startOfDay,
+                                        KycOfficer = kycOfficer,
+                                        Operation = KycOfficerReportOperationType.Declined,
+                                        ClientId = row.ClientId
+                                    });
+                            }
+                            if (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending))
+                            {
+                                toResubmit.Add(
+                                    new KycOfficersPerformanceRow()
+                                    {
+                                        ReportDay = startOfDay,
+                                        KycOfficer = kycOfficer,
+                                        Operation = KycOfficerReportOperationType.ToResubmit,
+                                        ClientId = row.ClientId
+                                    });
+                            }
+                        }
+
                         reportRows.AddRange(onBoarded);
-
-                        var declined = itemsToday
-                            .Where(row => 
-                                ((row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending))
-                            )
-                            .Select(row => new KycOfficersPerformanceRow() {
-                                ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.Declined, ClientId = row.ClientId
-                            })
-                            .ToList();
                         reportRows.AddRange(declined);
-
-                        var toResubmit = itemsToday
-                            .Where(row => 
-                                (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending))
-                            )
-                            .Select(row => new KycOfficersPerformanceRow() {
-                                ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.ToResubmit, ClientId = row.ClientId
-                            })
-                            .ToList();
                         reportRows.AddRange(toResubmit);
 
                         if (onBoarded.Count == 0 && declined.Count == 0 && toResubmit.Count == 0)
@@ -365,7 +382,6 @@ namespace Lykke.Service.KycReports.Services.Reports
                 {
                     var itemsTodayGroups =
                         auditLogEntities.Where(i => i.Date >= startOfDay && i.Date < startOfDay.AddDays(1))
-                            .OrderBy(i => i.Date)
                             .GroupBy(i => i.KycOfficer)
                             .ToList();
 
@@ -375,37 +391,55 @@ namespace Lykke.Service.KycReports.Services.Reports
                     foreach (var itemsToday in itemsTodayGroups)
                     {
                         var kycOfficer = itemsToday.Key;
+                        
+                        List<KycOfficersPerformanceRow> onBoarded = new List<KycOfficersPerformanceRow>();
+                        List<KycOfficersPerformanceRow> declined = new List<KycOfficersPerformanceRow>();
+                        List<KycOfficersPerformanceRow> toResubmit = new List<KycOfficersPerformanceRow>();
 
-                        var onBoarded = itemsToday
-                            .Where(row => (
-                                (row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending))
-                            )
-                            .Select(row => new KycOfficersPerformanceRow() {
-                                ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.OnBoarded, ClientId = row.ClientId
-                            })
-                            .ToList();
+                        foreach (var row in itemsToday.OrderBy(i => i.Date))
+                        {
+                            if ((row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending))
+                            {
+                                onBoarded.Add(
+                                    new KycOfficersPerformanceRow()
+                                    {
+                                        ReportDay = startOfDay,
+                                        KycOfficer = kycOfficer,
+                                        Operation = KycOfficerReportOperationType.OnBoarded,
+                                        ClientId = row.ClientId
+                                    });
+                            }
+                            if ((row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending))
+                            {
+                                declined.Add(
+                                    new KycOfficersPerformanceRow()
+                                    {
+                                        ReportDay = startOfDay,
+                                        KycOfficer = kycOfficer,
+                                        Operation = KycOfficerReportOperationType.Declined,
+                                        ClientId = row.ClientId
+                                    });
+                            }
+                            if (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending))
+                            {
+                                toResubmit.Add(
+                                    new KycOfficersPerformanceRow()
+                                    {
+                                        ReportDay = startOfDay,
+                                        KycOfficer = kycOfficer,
+                                        Operation = KycOfficerReportOperationType.ToResubmit,
+                                        ClientId = row.ClientId
+                                    });
+                            }
+                        }
+
                         reportRows.AddRange(onBoarded);
-
-                        var declined = itemsToday
-                            .Where(row => (row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending))
-                            .Select(row => new KycOfficersPerformanceRow() {
-                                ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.Declined, ClientId = row.ClientId
-                            })
-                            .ToList();
                         reportRows.AddRange(declined);
-
-                        var toResubmit = itemsToday
-                            .Where(row => 
-                                (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending))
-                            )
-                            .Select(row => new KycOfficersPerformanceRow() {
-                                ReportDay = startOfDay, KycOfficer = kycOfficer, Operation = KycOfficerReportOperationType.ToResubmit, ClientId = row.ClientId
-                            })
-                            .ToList();
                         reportRows.AddRange(toResubmit);
 
                         if (onBoarded.Count == 0 && declined.Count == 0 && toResubmit.Count == 0)
                             await _reportRepository.InsertRow(KycOfficersPerformanceRow.MakeNoDataRow(startOfDay));
+
                     }
                 }
                 catch (Exception ex)
@@ -464,14 +498,13 @@ namespace Lykke.Service.KycReports.Services.Reports
                                 var status = (KycStatus)item.CurrentStatus;
                                 var previousStatus = (KycStatus)item.PreviousStatus;
                                 
-                                const string boChanger = "BackOffice: ";
                                 string kycOfficer;
                                 if (item.Changer.StartsWith(boChanger))
                                     kycOfficer = item.Changer.Substring(boChanger.Length);
                                 else
                                     return null;
 
-                                var partnerName = "Lykke Wallet";
+                                var partnerName = lykkeWalletPartnerName;
                                 var client = (_clientAccountService.GetByIdAsync(item.ClientId)).Result;
                                 if (client?.PartnerId != null)
                                 {
@@ -492,151 +525,8 @@ namespace Lykke.Service.KycReports.Services.Reports
             return auditLogEntities;
         }
 
-        //public async Task<IEnumerable<KycReportDailyLeadership>> GenerateKycReportDailyLeadership(DateTime? from, bool isGenerateTodaysData = false)
-        //{
-        //    var firstHistoryDay = _settings.KycReportDailyLeadershipFirstHistoryDay; 
-
-        //    var today = DateTime.UtcNow;
-        //    var startDate = from ?? firstHistoryDay;
-        //    var endDate = new DateTime(today.Year, today.Month, today.Day);
-
-        //    if (!isGenerateTodaysData)
-        //        endDate = endDate.AddDays(-1); // Usually (to avoid system overload) we need to generate data for past dates only (ignore not finished day).
-
-        //    if (startDate < firstHistoryDay)
-        //        startDate = firstHistoryDay;
-        //    if (endDate >= today)
-        //        endDate = new DateTime(today.Year, today.Month, today.Day);
-
-        //    var datesArray = Enumerable.Range(0, 1 + endDate.Subtract(startDate).Days)
-        //          .Select(offset => startDate.AddDays(offset))
-        //          .ToArray();
-
-        //    var reportRowIds = KycReportDailyLeadership.GenerateRowids(startDate, endDate);
-        //    var existedData = (await _reportRepository.GetRows<KycReportDailyLeadership>(reportRowIds)).ToList();
-
-        //    var existedDates = existedData.Select(d => d.ReportDay).ToList();
-        //    var lastExistedRow = existedData.LastOrDefault();
-
-        //    var isNeedToPopulateData = !(datesArray.All(date => existedDates.Contains(date)) && lastExistedRow?.PendingAppsCountAtEnd >= 0);
-
-        //    // if all needed data is already populated, thaen avoid very expensive call of _auditLogRepository.GetKycRecordsAsync 
-        //    if (!isNeedToPopulateData)
-        //        return existedData;
-
-        //    var auditLogEntities = (await _auditLogRepository
-        //        .GetKycRecordsAsync(AuditRecordType.KycStatus, startDate, endDate))?
-        //        .Select(item =>
-        //        {
-        //            KycStatus status;
-        //            KycStatus previousStatus;
-        //            if (!Enum.TryParse(item.AfterJson, out status) ||
-        //                !Enum.TryParse(item.BeforeJson, out previousStatus))
-        //                return null;
-
-        //            return new KycStatusLogRecord(item.ClientId, status, previousStatus, item.CreatedTime);
-        //        }).Where(item => item != null).ToList();
-
-        //    var report = new Dictionary<DateTime, KycReportDailyLeadership>();
-
-        //    foreach (var startOfDay in datesArray)
-        //    {
-        //        try
-        //        {
-        //            var yesterday = startOfDay.AddDays(-1);
-        //            KycReportDailyLeadership previousReportRow;
-        //            if (report.ContainsKey(yesterday))
-        //                previousReportRow = report[yesterday];
-        //            else if (lastExistedRow != null)
-        //                previousReportRow = lastExistedRow;
-        //            else
-        //                previousReportRow = new KycReportDailyLeadership()
-        //                {
-        //                    PendingAppsCountAtEnd = -1,
-        //                    ReportDay = yesterday
-        //                };
-
-
-        //            var existedRow = existedData.FirstOrDefault(d => d.ReportDay == startOfDay);
-        //            if (startOfDay != endDate && existedRow != null)
-        //            {
-        //                report.Add(startOfDay, existedRow);
-        //                continue;
-        //            }
-
-        //            var itemsToday =
-        //                auditLogEntities.Where(i => i.Date >= startOfDay && i.Date < startOfDay.AddDays(1))
-        //                    .OrderBy(i => i.Date)
-        //                    .ToList();
-
-        //            var pendingAppsCountAtStart = previousReportRow.PendingAppsCountAtEnd;
-
-        //            var submittedAppsCount = itemsToday
-        //                .Where(i => i.StatusCurrent == KycStatus.Pending && i.StatusPrevious == KycStatus.NeedToFillData)
-        //                .Select(i => i.ClientId)
-        //                .Distinct()
-        //                .Count();
-
-        //            var processedAppsCount = itemsToday
-        //                .Where(i =>
-        //                            (i.StatusCurrent == KycStatus.ReviewDone && i.StatusPrevious == KycStatus.Pending) ||
-        //                            (i.StatusCurrent == KycStatus.NeedToFillData && i.StatusPrevious == KycStatus.Pending) ||
-        //                            (i.StatusCurrent == KycStatus.RestrictedArea && i.StatusPrevious == KycStatus.Pending) ||
-        //                            (i.StatusCurrent == KycStatus.Rejected && i.StatusPrevious == KycStatus.Pending)
-        //                )
-        //                .Select(i => i.ClientId)
-        //                .Distinct()
-        //                .Count();
-
-        //            var spiderCheckDoneCount = itemsToday
-        //                .Where(i => i.StatusCurrent == KycStatus.Ok && i.StatusPrevious == KycStatus.ReviewDone)
-        //                .Select(i => i.ClientId)
-        //                .Distinct()
-        //                .Count();
-
-        //            var pendingAppsCountAtEnd = -1;
-        //            if (startOfDay == endDate && previousReportRow.PendingAppsCountAtEnd < 0)
-        //            {
-        //                var pendigsCount = (await _kycRepository.GetClientsByStatus(KycStatus.Pending)).Count();
-        //                pendingAppsCountAtStart = pendigsCount;
-        //                previousReportRow.PendingAppsCountAtEnd = pendigsCount;
-        //                await _reportRepository.InsertRow(previousReportRow);
-        //            }
-
-        //            var reportRow = new KycReportDailyLeadership()
-        //            {
-        //                PendingAppsCountAtStart = pendingAppsCountAtStart,
-        //                SubmittedAppsCount = submittedAppsCount,
-        //                ProcessedAppsCount = processedAppsCount,
-        //                SpiderCheckDoneAppsCount = spiderCheckDoneCount,
-        //                PendingAppsCountAtEnd = pendingAppsCountAtEnd,
-        //                ReportDay = startOfDay
-        //            };
-
-        //            report.Add(startOfDay, reportRow);
-        //            await _reportRepository.InsertRow(reportRow);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            continue;
-        //        }
-
-
-        //    }
-
-        //    //var reportRows = report.Select(kv => kv.Value).ToList();
-
-        //    //var lastClosedRow = reportRows.Where(r => r.PendingAppsCountAtEnd > 0).OrderByDescending(r => r.ReportDay).FirstOrDefault();
-        //    //if (lastClosedRow != null)
-        //    //    await SendMailKycReportDailyLeadership(lastClosedRow.ReportDay, lastClosedRow.ReportDay);
-
-        //    return report.Select(kv => kv.Value);
-        //}
-
-
         public async Task<IEnumerable<KycClientStatRow>> GetKycClientStatRows(DateTime startDate, DateTime endDate, KycStatus[] statusFilter = null)
         {
-            string displayDateFormat = "dd-MM-yyyy";
             List<KycClientStatRow> result = new List<KycClientStatRow>();
 
             startDate = new DateTime(startDate.Year, startDate.Month, startDate.Day);

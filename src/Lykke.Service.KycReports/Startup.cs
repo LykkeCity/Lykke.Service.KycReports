@@ -56,7 +56,7 @@ namespace Lykke.Service.KycReports
                 var appSettings = Configuration.LoadSettings<AppSettings>();
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.KycReportService), appSettings.Nested(x => x.PersonalDataServiceSettings), Log));
+                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.KycReportService), appSettings.Nested(x => x.PersonalDataServiceSettings), appSettings.Nested(x => x.ClientAccountServiceClient), Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 

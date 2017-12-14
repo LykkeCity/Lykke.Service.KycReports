@@ -22,21 +22,21 @@ namespace Lykke.Service.KycReports.Controllers
         [Route("stats/{dateFrom}/{dateTo}")]
         public async Task<string> GetKycOfficerStatsJsonAsync(DateTime dateFrom, DateTime dateTo)
         {
-            return await _kycReportingService.GetKycOfficerStatsJsonAsync(dateFrom, dateTo);
+            return await _kycReportingService.GetKycOfficerStatsJsonAsync(dateFrom.Date, dateTo.Date);
         }
 
         [HttpGet]
         [Route("perform/{dateFrom}/{dateTo}")]
         public async Task<string> GetKycOfficersPerformanceJsonAsync(DateTime dateFrom, DateTime dateTo)
         {
-            return await _kycReportingService.GetKycOfficersPerformanceJsonAsync(dateFrom, dateTo);
+            return await _kycReportingService.GetKycOfficersPerformanceJsonAsync(dateFrom.Date, dateTo.Date);
         }
 
         [HttpGet]
         [Route("leadership/{dateFrom}/{dateTo}")]
         public async Task<string> GetKycReportDailyLeadershipDataJsonAsync(DateTime dateFrom, DateTime dateTo)
         {
-            return await _kycReportingService.GetKycReportDailyLeadershipDataJsonAsync(dateFrom, dateTo);
+            return await _kycReportingService.GetKycReportDailyLeadershipDataJsonAsync(dateFrom.Date, dateTo.Date);
         }
 
         [HttpPost]
@@ -57,7 +57,7 @@ namespace Lykke.Service.KycReports.Controllers
         [Route("clientStat/{dateFrom}/{dateTo}")]
         public async Task<IEnumerable<KycClientStatRow>> GetKycClientStatsData(DateTime dateFrom, DateTime dateTo)
         {
-            var rows = await _kycReportingService.GetKycClientStatRows(dateFrom, dateTo);
+            var rows = await _kycReportingService.GetKycClientStatRows(dateFrom.Date, dateTo.Date);
             return rows;
         }
 
@@ -65,7 +65,7 @@ namespace Lykke.Service.KycReports.Controllers
         [Route("clientStatShort/{dateFrom}/{dateTo}")]
         public async Task<IEnumerable<KycClientStatRow>> GetKycClientStatsDataShort(DateTime dateFrom, DateTime dateTo)
         {
-            var rows = await _kycReportingService.GetKycClientStatRows(dateFrom, dateTo, new KycStatus[] { KycStatus.Ok, KycStatus.ReviewDone });
+            var rows = await _kycReportingService.GetKycClientStatRows(dateFrom.Date, dateTo.Date, new KycStatus[] { KycStatus.Ok, KycStatus.ReviewDone });
             return rows;
         }
 

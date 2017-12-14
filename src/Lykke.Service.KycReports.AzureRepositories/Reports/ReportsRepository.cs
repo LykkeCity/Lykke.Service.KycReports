@@ -72,19 +72,6 @@ namespace Lykke.Service.KycReports.AzureRepositories.Reports
             return new List<string>();
         }
 
-        public async Task<IEnumerable<T>> GetRows<T>(IEnumerable<string> rowKeys = null)
-        {
-            var type = typeof (T);
-            string partitionKey = null;
-
-            if (type == typeof (KycReportDailyLeadership))
-                partitionKey = ReportRowEntity.GeneratePartitionKey(KycReportType.KycReportDailyLeadership);
-                
-            if (!string.IsNullOrWhiteSpace(partitionKey))
-                return await GetReportRows<T>(partitionKey, rowKeys);
-
-            return new List<T>();
-        }
 
         private async Task<IEnumerable<T>> GetReportRows<T>(string partitionKey, IEnumerable<string> rowKeys = null)
         {
@@ -140,7 +127,6 @@ namespace Lykke.Service.KycReports.AzureRepositories.Reports
             }
 
             return jsonRows
-                //.OrderByDescending(d => d.Timestamp)
                 .Select(d => d.JsonRow)
                 .ToList();
         }
