@@ -176,7 +176,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                         int declinedCount = 0;
                         int toResubmitCount = 0;
 
-                        foreach (var i in itemsToday.OrderBy(i => i.Date))
+                        foreach (var i in itemsToday)
                         {
                             if ((i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) && (i.StatusPrevious == KycStatus.Pending))
                             {
