@@ -22,9 +22,9 @@ namespace Lykke.Service.KycReports.Services.Reports
 {
     public class KycReportingService : IKycReportingService
     {
-        private const string lykkeWalletPartnerName = "Lykke Wallet";
-        private const string displayDateFormat = "dd-MM-yyyy";
-        private const string boChanger = "BackOffice: ";
+        private const string _lykkeWalletPartnerName = "Lykke Wallet";
+        private const string _displayDateFormat = "dd-MM-yyyy";
+        private const string _boChanger = "BackOffice: ";
 
         private readonly IKycReportsRepository _reportRepository;
         private readonly IPersonalDataService _personalDataService;
@@ -499,12 +499,12 @@ namespace Lykke.Service.KycReports.Services.Reports
                                 var previousStatus = (KycStatus)item.PreviousStatus;
                                 
                                 string kycOfficer;
-                                if (item.Changer.StartsWith(boChanger))
-                                    kycOfficer = item.Changer.Substring(boChanger.Length);
+                                if (item.Changer.StartsWith(_boChanger))
+                                    kycOfficer = item.Changer.Substring(_boChanger.Length);
                                 else
                                     return null;
 
-                                var partnerName = lykkeWalletPartnerName;
+                                var partnerName = _lykkeWalletPartnerName;
                                 var client = (_clientAccountService.GetByIdAsync(item.ClientId)).Result;
                                 if (client?.PartnerId != null)
                                 {
@@ -588,11 +588,11 @@ namespace Lykke.Service.KycReports.Services.Reports
                 {
                     if (res.PersonProfiles != null && res.PersonProfiles.Count() > 0)
                     {
-                        kycSpiderCheckPersonResult[res.Id] = new Tuple<string, string>("Yes", res.CheckDate.ToString(displayDateFormat));
+                        kycSpiderCheckPersonResult[res.Id] = new Tuple<string, string>("Yes", res.CheckDate.ToString(_displayDateFormat));
                     }
                     else
                     {
-                        kycSpiderCheckPersonResult[res.Id] = new Tuple<string, string>("No", res.CheckDate.ToString(displayDateFormat));
+                        kycSpiderCheckPersonResult[res.Id] = new Tuple<string, string>("No", res.CheckDate.ToString(_displayDateFormat));
                     }
                 }
             }
@@ -603,7 +603,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                 r.KycOfficer = item.Changer;
                 r.KycStatus = ((Lykke.Service.Kyc.Abstractions.Domain.Verification.KycStatus)item.CurrentStatus).ToString();
                 r.ChangeDate = item.CreatedTime;
-                r.Date = item.CreatedTime.ToString(displayDateFormat);
+                r.Date = item.CreatedTime.ToString(_displayDateFormat);
 
                 IList<string> partnerIds;
                 if (clientPartnerIdsDict.TryGetValue(item.ClientId, out partnerIds))
@@ -636,8 +636,8 @@ namespace Lykke.Service.KycReports.Services.Reports
                     r.CountryFromPOA = pd.CountryFromPOA;
                     r.CountryFromIP = pd.Country;
                     r.IsDateOfBirthNotEmpty = pd.DateOfBirth == null ? "No" : "Yes";
-                    r.DateOfPoaDocument = pd.DateOfPoaDocument?.ToString(displayDateFormat);
-                    r.DateOfExpiryOfID = pd.DateOfExpiryOfID?.ToString(displayDateFormat);
+                    r.DateOfPoaDocument = pd.DateOfPoaDocument?.ToString(_displayDateFormat);
+                    r.DateOfExpiryOfID = pd.DateOfExpiryOfID?.ToString(_displayDateFormat);
                     r.IsAddressNotEmpty = String.IsNullOrWhiteSpace(pd.Address) ? "No" : "Yes";
                     r.IsCityNotEmpty = String.IsNullOrWhiteSpace(pd.City) ? "No" : "Yes";
                     r.IsZipNotEmpty = String.IsNullOrWhiteSpace(pd.Zip) ? "No" : "Yes";
