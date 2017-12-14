@@ -7,7 +7,7 @@ using Lykke.Service.KycReports.AutorestClient.Models;
 
 namespace Lykke.Service.KycReports.Client
 {
-    public class KycReportsClient : IKycReportsClient, IDisposable
+    public class KycReportsClient : IKycReportsClient
     {
         private readonly ILog _log;
         private readonly IKycReportsAPI _api;
@@ -54,13 +54,5 @@ namespace Lykke.Service.KycReports.Client
             return await _api.ApiKycReportingClientStatShortByDateFromByDateToGetAsync(dateFrom, dateTo);
         }
 
-
-        public void Dispose()
-        {
-            //if (_service == null)
-            //    return;
-            //_service.Dispose();
-            //_service = null;
-        }
     }
 }

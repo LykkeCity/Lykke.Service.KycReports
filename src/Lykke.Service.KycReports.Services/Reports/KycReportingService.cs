@@ -49,18 +49,12 @@ namespace Lykke.Service.KycReports.Services.Reports
         {
             var jsonReportRows = (await GetKycOfficerStatsDataJsonRows(dateFrom, dateTo)).ToArray();
 
-            try
-            {
-                var reportRows = jsonReportRows
-                    .Select(JsonConvert.DeserializeObject<KycOfficerStatsDataReport>)
-                    .OrderByDescending(row => row.ReportDay)
-                    .ThenBy(row => row.KycOfficer);
+            var reportRows = jsonReportRows
+                .Select(JsonConvert.DeserializeObject<KycOfficerStatsDataReport>)
+                .OrderByDescending(row => row.ReportDay)
+                .ThenBy(row => row.KycOfficer);
 
-                jsonReportRows = reportRows.Select(JsonConvert.SerializeObject).ToArray();
-            }
-            catch (Exception ex)
-            {
-            }
+            jsonReportRows = reportRows.Select(JsonConvert.SerializeObject).ToArray();
 
             return $"'[\r\n{string.Join(", \r\n", jsonReportRows)}\r\n]'";
         }
@@ -69,20 +63,14 @@ namespace Lykke.Service.KycReports.Services.Reports
         {
             var jsonReportRows = (await GetKycOfficersPerformanceJsonRows(dateFrom, dateTo)).ToArray();
 
-            try
-            {
-                var reportRows = jsonReportRows
-                    .Select(JsonConvert.DeserializeObject<KycOfficersPerformanceRow>)
-                    .OrderByDescending(row => row.ReportDay)
-                    .ThenBy(row => row.KycOfficer)
-                    .ThenBy(row => row.Operation.ToString())
-                    .ThenBy(row => row.ClientEmail);
+            var reportRows = jsonReportRows
+                .Select(JsonConvert.DeserializeObject<KycOfficersPerformanceRow>)
+                .OrderByDescending(row => row.ReportDay)
+                .ThenBy(row => row.KycOfficer)
+                .ThenBy(row => row.Operation.ToString())
+                .ThenBy(row => row.ClientEmail);
 
-                jsonReportRows = reportRows.Select(JsonConvert.SerializeObject).ToArray();
-            }
-            catch (Exception ex)
-            {
-            }
+            jsonReportRows = reportRows.Select(JsonConvert.SerializeObject).ToArray();
 
             return $"'[\r\n{string.Join(", \r\n", jsonReportRows)}\r\n]'";
         }
