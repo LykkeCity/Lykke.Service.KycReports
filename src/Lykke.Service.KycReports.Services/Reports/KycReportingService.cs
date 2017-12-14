@@ -178,15 +178,15 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         foreach (var i in itemsToday)
                         {
-                            if ((i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) && (i.StatusPrevious == KycStatus.Pending))
+                            if ((i.StatusCurrent == KycStatus.ReviewDone || i.StatusCurrent == KycStatus.Ok) && (i.StatusPrevious == KycStatus.Pending || i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk))
                             {
                                 onBoardedCount++;
                             }
-                            if ((i.StatusCurrent == KycStatus.RestrictedArea || i.StatusCurrent == KycStatus.Rejected) && (i.StatusPrevious == KycStatus.Pending))
+                            if ((i.StatusCurrent == KycStatus.RestrictedArea || i.StatusCurrent == KycStatus.Rejected) && (i.StatusPrevious == KycStatus.Pending || i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk))
                             {
                                 declinedCount++;
                             }
-                            if (i.StatusCurrent == KycStatus.NeedToFillData && (i.StatusPrevious == KycStatus.Pending))
+                            if (i.StatusCurrent == KycStatus.NeedToFillData && (i.StatusPrevious == KycStatus.Pending || i.StatusPrevious == KycStatus.JumioFailed || i.StatusPrevious == KycStatus.JumioOk))
                             {
                                 toResubmitCount++;
                             }
@@ -284,7 +284,7 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         foreach(var row in itemsToday.OrderBy(i => i.Date))
                         {
-                            if ((row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending))
+                            if ((row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk))
                             {
                                 onBoarded.Add(
                                     new KycOfficersPerformanceRow()
@@ -295,7 +295,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                                         ClientId = row.ClientId
                                     });
                             }
-                            if ((row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending))
+                            if ((row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk))
                             {
                                 declined.Add(
                                     new KycOfficersPerformanceRow()
@@ -306,7 +306,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                                         ClientId = row.ClientId
                                     });
                             }
-                            if (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending))
+                            if (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk))
                             {
                                 toResubmit.Add(
                                     new KycOfficersPerformanceRow()
@@ -398,7 +398,7 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                         foreach (var row in itemsToday.OrderBy(i => i.Date))
                         {
-                            if ((row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending))
+                            if ((row.StatusCurrent == KycStatus.ReviewDone || row.StatusCurrent == KycStatus.Ok) && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk))
                             {
                                 onBoarded.Add(
                                     new KycOfficersPerformanceRow()
@@ -409,7 +409,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                                         ClientId = row.ClientId
                                     });
                             }
-                            if ((row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending))
+                            if ((row.StatusCurrent == KycStatus.RestrictedArea || row.StatusCurrent == KycStatus.Rejected) && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk))
                             {
                                 declined.Add(
                                     new KycOfficersPerformanceRow()
@@ -420,7 +420,7 @@ namespace Lykke.Service.KycReports.Services.Reports
                                         ClientId = row.ClientId
                                     });
                             }
-                            if (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending))
+                            if (row.StatusCurrent == KycStatus.NeedToFillData && (row.StatusPrevious == KycStatus.Pending || row.StatusPrevious == KycStatus.JumioFailed || row.StatusPrevious == KycStatus.JumioOk))
                             {
                                 toResubmit.Add(
                                     new KycOfficersPerformanceRow()
