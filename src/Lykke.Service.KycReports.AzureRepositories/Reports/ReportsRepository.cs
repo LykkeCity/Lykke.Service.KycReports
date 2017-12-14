@@ -88,21 +88,13 @@ namespace Lykke.Service.KycReports.AzureRepositories.Reports
 
         private async Task<IEnumerable<T>> GetReportRows<T>(string partitionKey, IEnumerable<string> rowKeys = null)
         {
-            try
-            {
-                IEnumerable<ReportRowEntity> data;
-                if (rowKeys == null)
-                    data = await _tableStorage.GetDataAsync(partitionKey);
-                else
-                    data = await _tableStorage.GetDataAsync(partitionKey, rowKeys);
+            IEnumerable<ReportRowEntity> data;
+            if (rowKeys == null)
+                data = await _tableStorage.GetDataAsync(partitionKey);
+            else
+                data = await _tableStorage.GetDataAsync(partitionKey, rowKeys);
 
-                return data.Select(d => JsonConvert.DeserializeObject<T>(d.JsonRow));
-            }
-            catch (Exception ex)
-            {
-                return new List<T>();
-            }
-            
+            return data.Select(d => JsonConvert.DeserializeObject<T>(d.JsonRow));
         }
 
         public async Task<List<string>> GetKycOfficerStatsJsonRows(DateTime from, DateTime to)
