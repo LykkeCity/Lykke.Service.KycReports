@@ -16,6 +16,7 @@ using Lykke.Service.Kyc.Abstractions.Services.Models;
 using Lykke.Service.PersonalData.Contract.Models;
 using Lykke.Service.ClientAccount.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
+using Lykke.Service.ClientAccount.Client.Models;
 using Common;
 
 namespace Lykke.Service.KycReports.Services.Reports
@@ -497,6 +498,12 @@ namespace Lykke.Service.KycReports.Services.Reports
                 partnersDict[p.PublicId] = p.Name;
             }
 
+            Dictionary<string, ClientAccountInformationModel> clients = null;
+            if (items != null)
+            {
+                clients = (await _clientAccountService.GetClientsByIdsAsync(items.Select(_ => _.ClientId).Distinct().ToArray())).ToDictionary(_ => _.Id, _ => _);
+            }
+
             var auditLogEntities = (items)?
                             .Select(item =>
                             {
@@ -510,17 +517,20 @@ namespace Lykke.Service.KycReports.Services.Reports
                                     return null;
 
                                 var partnerName = _lykkeWalletPartnerName;
-                                var client = (_clientAccountService.GetByIdAsync(item.ClientId)).Result;
-                                if (client?.PartnerId != null)
-                                {
-                                    if (partnersDict.TryGetValue(client.PartnerId, out string name))
+                                //var client = (_clientAccountService.GetByIdAsync(item.ClientId)).Result;
+                                ClientAccountInformationModel client;
+                                if (clients.TryGetValue(item.ClientId, out client)) {
+                                    if (client.PartnerId != null)
                                     {
-                                        partnerName = name;
-                                    }
-                                    else
-                                    {
-                                        partnerName = null;
-                                        _log.WriteWarningAsync("GetKycStatusLogRecords", new { startDate, endDate }.ToJson(), $"Cannot find Partner with ID = {client.PartnerId}");
+                                        if (partnersDict.TryGetValue(client.PartnerId, out string name))
+                                        {
+                                            partnerName = name;
+                                        }
+                                        else
+                                        {
+                                            partnerName = null;
+                                            _log.WriteWarningAsync("GetKycStatusLogRecords", new { startDate, endDate }.ToJson(), $"Cannot find Partner with ID = {client.PartnerId}");
+                                        }
                                     }
                                 }
 
