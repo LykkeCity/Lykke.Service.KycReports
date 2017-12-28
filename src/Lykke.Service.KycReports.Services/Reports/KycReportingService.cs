@@ -491,6 +491,10 @@ namespace Lykke.Service.KycReports.Services.Reports
             f.DatePeriod.EndDate = endDate;
 
             IEnumerable<IKycStatuschangeItem> items = await _kycStatusService.GetRecordsForPeriodAsync(f);
+            if (items == null || items.Count() == 0)
+            {
+                return new List<KycStatusLogRecord>();
+            }
             IEnumerable<Partner> partners = await _partnersService.GetPartnersAsync();
             Dictionary<string, string> partnersDict = new Dictionary<string, string>();
             foreach (Partner p in partners)
@@ -499,17 +503,13 @@ namespace Lykke.Service.KycReports.Services.Reports
             }
 
             Dictionary<string, ClientAccountInformationModel> clients = null;
-            if (items != null)
-            {
-                clients = (await _clientAccountService.GetClientsByIdsAsync(items.Select(_ => _.ClientId).Distinct().ToArray())).ToDictionary(_ => _.Id, _ => _);
-            }
+            clients = (await _clientAccountService.GetClientsByIdsAsync(items.Select(_ => _.ClientId).Distinct().ToArray())).ToDictionary(_ => _.Id, _ => _);
 
-            var auditLogEntities = (items)?
-                            .Select(item =>
+            var auditLogEntities = items.Select(item =>
                             {
                                 var status = (KycStatus)item.CurrentStatus;
                                 var previousStatus = (KycStatus)item.PreviousStatus;
-                                
+
                                 string kycOfficer;
                                 if (item != null && item.Changer != null && item.Changer.StartsWith(_boChanger))
                                     kycOfficer = item.Changer.Substring(_boChanger.Length);
@@ -518,8 +518,9 @@ namespace Lykke.Service.KycReports.Services.Reports
 
                                 var partnerName = _lykkeWalletPartnerName;
                                 ClientAccountInformationModel client;
-                                if (clients.TryGetValue(item.ClientId, out client)) {
-                                    if (client.PartnerId != null)
+                                if (clients.TryGetValue(item.ClientId, out client))
+                                {
+                                    if (!String.IsNullOrWhiteSpace(client.PartnerId))
                                     {
                                         if (partnersDict.TryGetValue(client.PartnerId, out string name))
                                         {
