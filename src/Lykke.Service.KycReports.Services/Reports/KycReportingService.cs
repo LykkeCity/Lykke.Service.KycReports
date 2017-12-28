@@ -511,13 +511,12 @@ namespace Lykke.Service.KycReports.Services.Reports
                                 var previousStatus = (KycStatus)item.PreviousStatus;
                                 
                                 string kycOfficer;
-                                if (item.Changer.StartsWith(_boChanger))
+                                if (item != null && item.Changer != null && item.Changer.StartsWith(_boChanger))
                                     kycOfficer = item.Changer.Substring(_boChanger.Length);
                                 else
                                     return null;
 
                                 var partnerName = _lykkeWalletPartnerName;
-                                //var client = (_clientAccountService.GetByIdAsync(item.ClientId)).Result;
                                 ClientAccountInformationModel client;
                                 if (clients.TryGetValue(item.ClientId, out client)) {
                                     if (client.PartnerId != null)
