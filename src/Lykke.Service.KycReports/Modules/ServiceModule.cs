@@ -22,11 +22,11 @@ namespace Lykke.Service.KycReports.Modules
     public class ServiceModule : Module
     {
         private readonly IReloadingManager<KycReportsSettings> _settings;
-        private readonly IReloadingManager<PersonalDataServiceSettings> _personalDataServiceSettings;
+        private readonly IReloadingManager<PersonalDataServiceClientSettings> _personalDataServiceSettings;
         private readonly IReloadingManager<ClientAccountServiceClientSettings> _clientAccountServiceSettings;
         private readonly ILog _log;
 
-        public ServiceModule(IReloadingManager<KycReportsSettings> settings, IReloadingManager<PersonalDataServiceSettings> personalDataServiceSettings, IReloadingManager<ClientAccountServiceClientSettings> clientAccountServiceSettings, ILog log)
+        public ServiceModule(IReloadingManager<KycReportsSettings> settings, IReloadingManager<PersonalDataServiceClientSettings> personalDataServiceSettings, IReloadingManager<ClientAccountServiceClientSettings> clientAccountServiceSettings, ILog log)
         {
             _settings = settings;
             _personalDataServiceSettings = personalDataServiceSettings;
