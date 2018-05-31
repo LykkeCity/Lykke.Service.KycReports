@@ -3,6 +3,7 @@ using Common.Log;
 using Lykke.Service.KycReports.AutorestClient;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Net.Http;
 using Lykke.Service.KycReports.AutorestClient.Models;
 
 namespace Lykke.Service.KycReports.Client
@@ -16,7 +17,7 @@ namespace Lykke.Service.KycReports.Client
         {
 
             _log = log;
-            _api = new KycReportsAPI(new Uri(serviceUrl));
+            _api = new KycReportsAPI(new Uri(serviceUrl), new HttpClient());
         }
 
         public async Task<string> GetKycOfficerStatsJsonAsync(DateTime dateFrom, DateTime dateTo)
