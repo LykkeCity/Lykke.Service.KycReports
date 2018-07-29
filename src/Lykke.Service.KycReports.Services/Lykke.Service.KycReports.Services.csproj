@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>Lykke.Service.KycReports.Services</AssemblyName>
     <RootNamespace>Lykke.Service.KycReports.Services</RootNamespace>
     <Version>1.0.0</Version>
@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="3.1.1" />
+    <PackageReference Include="Lykke.Common" Version="7.0.3" />
     <PackageReference Include="Lykke.Service.ClientAccount.Client" Version="1.1.19" />
     <PackageReference Include="Lykke.Service.Kyc.Client" Version="1.0.32" />
     <PackageReference Include="Lykke.Service.PersonalData" Version="1.0.32" />
