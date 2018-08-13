@@ -1,5 +1,5 @@
 ---
-JumioIntegrationService: 
+KycReportService: 
   Db:
     LogsConnString: 
       settings-key: KycReports-LogsConnString
