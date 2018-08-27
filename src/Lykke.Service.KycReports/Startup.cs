@@ -81,7 +81,7 @@ namespace Lykke.Service.KycReports
                 app.UseLykkeMiddleware("KycReports", ex => new {Message = "Technical problem"});
 
                 app.UseMvc();
-                app.UseSwagger();
+                app.UseSwagger(options => { });
                 app.UseSwaggerUi();
                 app.UseStaticFiles();
 
