@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Net.Http;
 using Lykke.Service.KycReports.AutorestClient.Models;
+using Lykke.Common.Log;
 
 namespace Lykke.Service.KycReports.Client
 {
@@ -13,10 +14,16 @@ namespace Lykke.Service.KycReports.Client
         private readonly ILog _log;
         private readonly IKycReportsAPI _api;
 
+        [Obsolete("Please, use the overload which consumes ILogFactory instead.")]
         public KycReportsClient(string serviceUrl, ILog log)
         {
-
             _log = log;
+            _api = new KycReportsAPI(new Uri(serviceUrl), new HttpClient());
+        }
+
+        public KycReportsClient(string serviceUrl, ILogFactory logFactory)
+        {
+            _log = logFactory.CreateLog(this);
             _api = new KycReportsAPI(new Uri(serviceUrl), new HttpClient());
         }
 
